@@ -1,0 +1,41 @@
+name: Probe Weifile
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL'
+        required: true
+        default: 'https://v2z8je.u8entertainment.com/channel/O.O.CA/weifile/'
+
+jobs:
+  probe:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Playwright + WebKit
+        run: |
+          pip install --upgrade pip
+          pip install playwright
+          python -m playwright install webkit
+          python -m playwright install-deps webkit || true
+
+      - name: Run probe
+        env:
+          TARGET_URL: ${{ github.event.inputs.target_url }}
+        run: python probe.py
+
+      - name: Upload capture
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: capture-${{ github.run_number }}
+          path: /tmp/out/capture.json
+          retention-days: 7
